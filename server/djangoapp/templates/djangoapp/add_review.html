@@ -13,6 +13,7 @@
     <body>
     <!--Add review form here -->
     <form action="{% url 'djangoapp:add_review' dealer.id%}" method="post">
+        {% csrf_token %}
         <h1>Add a review about {{dealer.full_name}}</h1>
         <br><h5>Enter the review content:</h5><br>
         <textarea class="form-control" id="content" name="content" rows="2" required></textarea>
