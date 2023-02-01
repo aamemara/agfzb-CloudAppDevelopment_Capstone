@@ -111,7 +111,17 @@ def add_review(request, dealer_id):
             return render(request, 'djangoapp/add_review.html', context)
         elif request.method == "POST":
             url = "https://us-south.functions.appdomain.cloud/api/v1/web/118184fe-af96-45aa-b259-200ae71d5674/dealership-package/post-review"
-            review = request.POST
+            cars = CarModel.objects.filter(dealer_id=dealer_id)
+            car = cars[int(request.POST['car'])-1]
+            review = {}
+            review["name"] = request.user.get_full_name()
+            review["purchase_date"] = request.POST['purchasedate']
+            review["dealership"] = dealer_id
+            review["review"] = request.POST['content']
+            review["purchase"] = request.POST['purchasecheck']
+            review["car_make"] = car.car_make.name
+            review["car_model"] = car.name
+            review["car_year"] = car.year
             #review = {}
             #review["name"] = "Ahmed Emara"
             #review["purchase_date"] = "1/2/2023"
