@@ -1,5 +1,7 @@
 from django.db import models
 from django.utils.timezone import now
+from django.core.validators import MaxValueValidator, MinValueValidator
+from datetime import datetime
 
 
 # Create your models here.
@@ -36,7 +38,11 @@ class CarModel(models.Model):
     dealer_id = models.IntegerField()
     name = models.CharField(null=False, max_length=10)
     ctype = models.CharField(null=False, max_length=5,choices=CAR_CHOICES,default=SEDAN)
-    year = models.DateField(null=True)
+    year = models.PositiveIntegerField(
+            validators=[
+                MinValueValidator(1900), 
+                MaxValueValidator(datetime.now().year)],
+            help_text="Use the following format: <YYYY>")
     def __str__(self):
         return self.name + " is of type " + self.ctype + " and released on " + str(self.year)
 
