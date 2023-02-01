@@ -2,8 +2,8 @@ from django.shortcuts import render
 from django.http import HttpResponseRedirect, HttpResponse
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404, render, redirect
-# from .models import related models
-from .restapis import get_dealers_from_cf, post_request
+from .models import CarModel
+from .restapis import get_dealers_from_cf, get_dealer_reviews_from_cf, post_request, get_dealer_by_id
 from django.contrib.auth import login, logout, authenticate
 from django.contrib import messages
 from datetime import datetime
@@ -71,39 +71,57 @@ def registration_request(request):
 # Update the `get_dealerships` view to render the index page with a list of dealerships
 def get_dealerships(request):
     if request.method == "GET":
+        context = {}
         url = "https://us-south.functions.appdomain.cloud/api/v1/web/118184fe-af96-45aa-b259-200ae71d5674/dealership-package/get-dealership"
         # Get dealers from the URL
         dealerships = get_dealers_from_cf(url)
+        context["dealership_list"] = dealerships
+        return render(request, 'djangoapp/index.html', context)
         # Concat all dealer's short name
-        dealer_names = ' '.join([dealer.short_name for dealer in dealerships])
+        #dealer_names = ' '.join([dealer.short_name for dealer in dealerships])
         # Return a list of dealer short name
-        return HttpResponse(dealer_names)
+        #return HttpResponse(dealer_names)
 
 # Create a `get_dealer_details` view to render the reviews of a dealer
 # def get_dealer_details(request, dealer_id):
 # ...
 def get_dealer_details(request, dealer_id):
     if request.method == "GET":
+        context = {}
         url = "https://us-south.functions.appdomain.cloud/api/v1/web/118184fe-af96-45aa-b259-200ae71d5674/dealership-package/get-review"
         reviews = get_dealer_reviews_from_cf(url, dealer_id)
-        reviews_text = ' '.join([review.review + " (" + str(review.sentiment) + ")" for review in reviews])
-        return HttpResponse(reviews_text)
+        context["dealer_id"] = dealer_id
+        context["reviews_list"] = reviews
+        return render(request, 'djangoapp/dealer_details.html', context)
+        #reviews_text = ' '.join([review.review + " (" + str(review.sentiment) + ")" for review in reviews])
+        #return HttpResponse(reviews_text)
 
 # Create a `add_review` view to submit a review
 # def add_review(request, dealer_id):
 # ...
 def add_review(request, dealer_id):
-    url = "https://us-south.functions.appdomain.cloud/api/v1/web/118184fe-af96-45aa-b259-200ae71d5674/dealership-package/post-review"
-    review = {}
-    review["name"] = "Ahmed Emara"
-    review["purchase_date"] = "1/2/2023"
-    review["dealership"] = dealer_id
-    review["review"] = "This is a great car dealer"
-    review["purchase"] = True
-    review["car_make"] = "Renault"
-    review["car_model"] = "Logan"
-    review["car_year"] = 2016
-    json_payload = {}
-    json_payload["review"] = review
-    response = post_request(url, json_payload)
-    return HttpResponse(response)
+    if request.user.is_authenticated:
+        if request.method == "GET":
+            context = {}
+            url = "https://us-south.functions.appdomain.cloud/api/v1/web/118184fe-af96-45aa-b259-200ae71d5674/dealership-package/get-dealership"
+            cars = CarModel.objects.filter(dealer_id=dealer_id)
+            dealer = get_dealer_by_id(url, dealer_id)
+            context["cars"] = cars
+            context["dealer"] = dealer
+            return render(request, 'djangoapp/add_review.html', context)
+        elif request.method == "POST":
+            url = "https://us-south.functions.appdomain.cloud/api/v1/web/118184fe-af96-45aa-b259-200ae71d5674/dealership-package/post-review"
+            review = request.POST
+            #review = {}
+            #review["name"] = "Ahmed Emara"
+            #review["purchase_date"] = "1/2/2023"
+            #review["dealership"] = dealer_id
+            #review["review"] = "This is a great car dealer"
+            #review["purchase"] = True
+            #review["car_make"] = "Renault"
+            #review["car_model"] = "Logan"
+            #review["car_year"] = 2016
+            json_payload = {}
+            json_payload["review"] = review
+            response = post_request(url, json_payload)
+            return HttpResponse(response)
