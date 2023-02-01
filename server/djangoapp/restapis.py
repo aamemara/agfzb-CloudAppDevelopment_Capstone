@@ -61,6 +61,13 @@ def get_dealers_from_cf(url, **kwargs):
 
     return results
 
+def get_dealer_by_id(url, dealer_id, **kwargs):
+    json_result = get_request(url+"?id="+str(dealer_id))
+    if json_result:
+        dealers = json_result["docs"][0]
+
+    return dealers
+
 # Create a get_dealer_reviews_from_cf method to get reviews by dealer id from a cloud function
 # def get_dealer_by_id_from_cf(url, dealerId):
 # - Call get_request() with specified arguments
@@ -97,7 +104,7 @@ def analyze_review_sentiments(dealerreview):
     response = natural_language_understanding.analyze(
         text=dealerreview,
         features=Features(sentiment=SentimentOptions())).get_result()
-    return response["sentiment"]
+    return response["sentiment"]["document"]["label"]
 
 
 
